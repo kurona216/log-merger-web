@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>跑团 LOG 合并工具</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+:root {
+  --bg: #0f1115;
+  --card: #1b1f27;
+  --border: #2a2f3a;
+  --text: #e6e8ee;
+  --subtext: #aab0c0;
+  --accent: #7aa2ff;
+  --accent-hover: #5f8cff;
+  --success: #8bd49c;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI",
+               "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+}
+
+.container {
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 24px 16px 64px;
+}
+
+h1 {
+  text-align: center;
+  margin-bottom: 6px;
+}
+
+.subtitle {
+  text-align: center;
+  color: var(--subtext);
+  font-size: 0.95rem;
+  margin-bottom: 26px;
+}
+
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 22px;
+  margin-bottom: 26px;
+}
+
+.upload-area {
+  border: 2px dashed var(--border);
+  border-radius: 12px;
+  padding: 36px 20px;
+  text-align: center;
+  cursor: pointer;
+}
+
+.upload-area:hover {
+  border-color: var(--accent);
+  background: rgba(122,162,255,0.05);
+}
+
+.upload-area p {
+  margin: 0;
+  color: var(--subtext);
+}
+
+input[type=file] { display: none; }
+
+.file-list {
+  margin-top: 16px;
+  font-size: 0.9rem;
+}
+
+.file-item {
+  padding: 6px 0;
+  border-bottom: 1px dashed var(--border);
+  color: var(--subtext);
+}
+
+.actions {
+  margin-top: 20px;
+  text-align: center;
+}
+
+button {
+  background: var(--accent);
+  border: none;
+  border-radius: 10px;
+  padding: 12px 26px;
+  color: #fff;
+  font-size: 0.95rem;
+  cursor: pointer;
+}
+
+button:hover { background: var(--accent-hover); }
+
+.progress {
+  display: none;
+  margin-top: 18px;
+}
+
+.progress-bar {
+  height: 10px;
+  background: var(--border);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.progress-inner {
+  height: 100%;
+  width: 0%;
+  background: var(--accent);
+  transition: width 0.3s;
+}
+
+.progress-text {
+  margin-top: 6px;
+  text-align: center;
+  font-size: 0.85rem;
+  color: var(--subtext);
+}
+
+.desc h2 { margin-top: 0; }
+
+.desc p {
+  font-size: 0.9rem;
+  color: var(--subtext);
+  line-height: 1.6;
+}
+
+.footer {
+  text-align: center;
+  font-size: 0.8rem;
+  color: var(--subtext);
+  margin-top: 32px;
+}
+</style>
+</head>
+
+<body>
+<div class="container">
+
+<h1>跑团 LOG 合并工具</h1>
+<div class="subtitle">
+一个用于整理和合并跑团 LOG 的 TXT 文件的网站
+</div>
+
+<div class="card">
+  <form id="mergeForm">
+    <label class="upload-area">
+      <input type="file" id="fileInput" name="files" multiple accept=".txt">
+      <p>把跑团 LOG 的 TXT 文件拖到这里</p>
+      <p>或点击选择多个文件</p>
+    </label>
+
+    <div class="file-list" id="fileList"></div>
+
+    <div class="actions">
+      <button type="submit">开始合并</button>
+    </div>
+
+    <div class="progress" id="progress">
+      <div class="progress-bar">
+        <div class="progress-inner" id="progressInner"></div>
+      </div>
+      <div class="progress-text" id="progressText">处理中…</div>
+    </div>
+  </form>
+</div>
+
+<div class="card desc">
+<h2>使用说明</h2>
+
+<p>
+一个用于整理和合并跑团 LOG 的 TXT 文件的网站。<br>
+支持溯洄 & 海豹 LOG，一键合并、排序、去重、替换 CQ 码图片。
+</p>
+
+<p>
+初衷是想要溯洄骰点又想要海豹带图（CQ 码）的 LOG 创建，<br>
+因此选择同时开启两份 LOG。
+</p>
+
+<p>
+该网站会按照时间顺序排列你的 LOG，一键合并并去重。<br>
+合并时会优先使用 CQ 码替换 <code>[图片]</code>，若无法替换则保留原内容。
+</p>
+
+<p>
+合并完成后的结果可直接丢进海豹染色器使用。
+</p>
+</div>
+
+<div class="footer">
+制作人：大体上是 GPT 师傅 ｜ 协助人：deepseek 师傅
+</div>
+
+</div>
+
+<script>
+const input = document.getElementById("fileInput");
+const list = document.getElementById("fileList");
+const form = document.getElementById("mergeForm");
+const progress = document.getElementById("progress");
+const bar = document.getElementById("progressInner");
+const text = document.getElementById("progressText");
+
+input.addEventListener("change", () => {
+  list.innerHTML = "";
+  Array.from(input.files).forEach(f => {
+    const div = document.createElement("div");
+    div.className = "file-item";
+    div.textContent = f.name;
+    list.appendChild(div);
+  });
+});
+
+form.addEventListener("submit", async e => {
+  e.preventDefault();
+  if (!input.files.length) return;
+
+  progress.style.display = "block";
+  bar.style.width = "0%";
+  text.textContent = "正在合并…";
+
+  let fake = 0;
+  const timer = setInterval(() => {
+    fake = Math.min(fake + Math.random() * 20, 90);
+    bar.style.width = fake + "%";
+  }, 300);
+
+  const data = new FormData();
+  Array.from(input.files).forEach(f => data.append("files", f));
+
+  const res = await fetch("/merge", { method: "POST", body: data });
+  const blob = await res.blob();
+
+  clearInterval(timer);
+  bar.style.width = "100%";
+  text.textContent = "合并完成，正在下载…";
+
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "合并结果.txt";
+  a.click();
+
+  setTimeout(() => {
+    progress.style.display = "none";
+    bar.style.width = "0%";
+  }, 1500);
+});
+</script>
+</body>
+</html>
