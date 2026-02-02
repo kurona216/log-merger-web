@@ -7,13 +7,16 @@ app = Flask(__name__)
 
 @app.route("/")
 def index():
+    # 使用 templates/index.html
     return render_template("index.html")
 
 @app.route("/merge", methods=["POST"])
 def merge():
     files = request.files.getlist("files")
-    contents = [f.read().decode("utf-8", errors="ignore") for f in files]
+    if not files:
+        return "没有上传文件", 400
 
+    contents = [f.read().decode("utf-8", errors="ignore") for f in files]
     result = merge_logs(contents)
 
     return send_file(
@@ -24,7 +27,6 @@ def merge():
     )
 
 if __name__ == "__main__":
-    app.run(
-        host="0.0.0.0",
-        port=int(os.environ.get("PORT", 5000))
-    )
+    # Railway 必须用 PORT 环境变量
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port)
